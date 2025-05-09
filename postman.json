@@ -1,0 +1,255 @@
+{
+    "info": {
+      "name": "FastAPI Service Collection",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+      "_postman_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    },
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:8000",
+        "type": "string"
+      },
+      {
+        "key": "ws_base_url",
+        "value": "ws://localhost:8000",
+        "type": "string"
+      },
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "uuid_from_ws",
+        "value": "",
+        "type": "string"
+      }
+    ],
+    "item": [
+      {
+        "name": "WebSocket Login",
+        "request": {
+          "method": "GET",
+          "url": "{{ws_base_url}}/ws/login?referred_by=testref",
+          "description": "Connect to the WebSocket login endpoint, receive a UUID and bot_url, then send back a fake JWT and expect a jwt_saved response."
+        },
+        "event": [
+          {
+            "listen": "message",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "// First message: UUID + bot_url",
+                "let msg = pm.websocket.getMessage();",
+                "pm.test(\"Login response is valid JSON\", () => {",
+                "    pm.expect(() => JSON.parse(msg.data)).not.to.throw();",
+                "});",
+                "const data = JSON.parse(msg.data);",
+                "pm.test(\"Contains uuid and bot_url\", () => {",
+                "    pm.expect(data).to.have.property(\"uuid\").that.is.a(\"string\");",
+                "    pm.expect(data).to.have.property(\"bot_url\").that.is.a(\"string\");",
+                "});",
+                "",
+                "// Store for later use",
+                "pm.environment.set(\"uuid_from_ws\", data.uuid);",
+                "",
+                "// Send back a fake JWT",
+                "pm.websocket.sendText(JSON.stringify({ jwt: \"fake.token.here\" }));",
+                "",
+                "// Then expect a jwt_saved ack",
+                "setTimeout(() => {",
+                "  let resp = pm.websocket.getMessage();",
+                "  pm.test(\"JWT saved ack\", () => {",
+                "    const d = JSON.parse(resp.data);",
+                "    pm.expect(d).to.have.property(\"status\", \"jwt_saved\");",
+                "  });",
+                "}, 500);"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Confirm Code",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"uuid\": \"{{uuid_from_ws}}\",\n  \"chat_id\": \"123456\",\n  \"username\": \"johndoe\",\n  \"full_name\": \"John Doe\",\n  \"referred_by\": \"testref\"\n}"
+          },
+          "url": "{{base_url}}/service/confirm-code"
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => {",
+                "  pm.response.to.have.status(200);",
+                "});",
+                "pm.test(\"Response has token and status\", () => {",
+                "  let json = pm.response.json();",
+                "  pm.expect(json).to.have.property(\"status\", \"sent\");",
+                "  pm.expect(json).to.have.property(\"token\").that.is.a(\"string\");",
+                "  pm.environment.set(\"token\", json.token);",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Confirm Code - Missing UUID",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"chat_id\": \"123456\",\n  \"username\": \"johndoe\"\n}"
+          },
+          "url": "{{base_url}}/service/confirm-code"
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 400 for missing uuid\", () => {",
+                "  pm.response.to.have.status(400);",
+                "});",
+                "pm.test(\"Error message present\", () => {",
+                "  let json = pm.response.json();",
+                "  pm.expect(json).to.have.property(\"error\");",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Submit Tasks",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"date\": \"2025-05-08\",\n  \"developer\": \"alice\",\n  \"yesterday\": [\"fixed bug #123\", \"code review\"],\n  \"today\": [\"implement feature X\"],\n  \"blockers\": []\n}"
+          },
+          "url": "{{base_url}}/tasks/submit"
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => {",
+                "  pm.response.to.have.status(200);",
+                "});",
+                "pm.test(\"Returned inserted_id\", () => {",
+                "  const json = pm.response.json();",
+                "  pm.expect(json).to.have.property(\"inserted_id\").that.is.a(\"string\");",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Get Reports",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/tasks/reports?date=2025-05-08",
+            "host": ["{{base_url}}"],
+            "path": ["tasks", "reports"],
+            "query": [
+              {
+                "key": "date",
+                "value": "2025-05-08"
+              }
+            ]
+          }
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => {",
+                "  pm.response.to.have.status(200);",
+                "});",
+                "pm.test(\"Response is array\", () => {",
+                "  const data = pm.response.json();",
+                "  pm.expect(data).to.be.an(\"array\");",
+                "});",
+                "pm.test(\"All reports have the requested date\", () => {",
+                "  const reports = pm.response.json();",
+                "  reports.forEach(r => {",
+                "    pm.expect(r).to.have.property(\"date\", \"2025-05-08\");",
+                "  });",
+                "});"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Get Reports - Invalid Owner ID",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ],
+          "url": "{{base_url}}/tasks/reports?owner_id=invalid!"
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"400 for bad owner_id\", () => {",
+                "  pm.response.to.have.status(400);",
+                "});"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+  
