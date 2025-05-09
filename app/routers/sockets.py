@@ -2,6 +2,7 @@ import uuid
 import json
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 
 from app.database import redis
 from app.auth import BOT_URL
@@ -10,6 +11,23 @@ router = APIRouter()
 
 active_connections = {}
 
+@router.get("/ws/login", include_in_schema=True, tags=["WebSocket"])
+def websocket_info():
+    """
+    **WebSocket Endpoint**  
+    Connect to `ws://<host>/ws/login` or `wss://<host>/ws/login` using WebSocket.  
+    Optional query param: `referred_by` (string).  
+
+    **Usage:**
+    - On connect, receive `{ "uuid": "<uuid>", "bot_url": "<bot_link>" }`
+    - Send JSON `{"jwt": "<your_token>"}` to save token in Redis.
+    - On disconnect, session UUID is removed.
+
+    ⚠ This is a placeholder to display WebSocket usage in docs.
+    """
+    return JSONResponse({
+        "detail": "Use WebSocket at /ws/login — this is just a documentation helper."
+    })
 
 @router.websocket("/login")
 @router.websocket("/login/")

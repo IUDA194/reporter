@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, Request, Header, HTTPException, Depends
-from typing import Optional
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, Request, Header, HTTPException, Depends, status
+from typing import Optional, List
 from datetime import date, datetime
 from bson import ObjectId
 import os
@@ -15,7 +15,14 @@ from app.utils import enrich_task
 
 router = APIRouter()
 
-@router.post("/submit")
+@router.post(
+    "/submit",
+    status_code=status.HTTP_201_CREATED,
+    response_description="Отчет успешно сохранен",
+    summary="Отправка ежедневного отчета",
+    response_model=dict,
+    tags=["Reports"],
+)
 async def submit(data: TaskSuccessResponse, user_payload: dict = Depends(get_user_from_jwt)):
     user_id = user_payload.get("user_id")
     if not user_id:
@@ -33,7 +40,19 @@ async def submit(data: TaskSuccessResponse, user_payload: dict = Depends(get_use
     result = await collection.insert_one(enriched_data)
     return {"inserted_id": str(result.inserted_id)}
 
-@router.get("/reports")
+@router.get(
+    "/reports",
+    response_model=List[dict],  # можно заменить на Pydantic модель, если есть
+    summary="Получение отчетов пользователя",
+    tags=["Reports"],
+    description="""
+    Возвращает список отчетов по дате и/или владельцу.  
+    По умолчанию — текущий авторизованный пользователь.
+
+    - **date** (опционально): дата отчета `YYYY-MM-DD`
+    - **owner_id** (опционально): ID другого пользователя (если есть доступ)
+    """
+)
 async def get_reports(
     date: Optional[date] = Query(None, description="Дата отчёта в формате YYYY-MM-DD"),
     owner_id: Optional[str] = Query(None, description="ID пользователя, если нужно посмотреть чужие отчёты"),
