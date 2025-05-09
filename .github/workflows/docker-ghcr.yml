@@ -31,12 +31,15 @@ jobs:
             echo "TAG=latest" >> $GITHUB_OUTPUT
           fi
 
+      - name: Set lowercase repo owner
+        run: echo "REPO_OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.REPO_OWNER_LC }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ steps.version.outputs.TAG }}
 
@@ -53,5 +56,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.TAG }}
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/${{ env.REPO_OWNER_LC }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.TAG }}
+            ghcr.io/${{ env.REPO_OWNER_LC }}/${{ env.IMAGE_NAME }}:latest
