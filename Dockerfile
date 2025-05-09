@@ -16,4 +16,4 @@ COPY . .
 
 RUN uv sync --locked --no-dev
 
-CMD ["uv", "run", "main.py"]
+CMD ["uv", "run", "start_api.py"]

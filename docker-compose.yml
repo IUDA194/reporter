@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo_daily
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 1213
+    volumes:
+      - mongo_data:/data/db
+
+  app:
+    image: ghcr.io/iuda194/socialsearch:latest
+    container_name: socialsearch_app
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://root:1213@mongo:27017/
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
