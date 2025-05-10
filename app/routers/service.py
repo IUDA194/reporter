@@ -1,5 +1,7 @@
 import jwt
 import json
+import random
+import uuid
 
 from datetime import datetime
 from fastapi import APIRouter, Request
@@ -60,3 +62,48 @@ async def confirm_code(request: Request):
 
     await websocket.send_text(json.dumps(message))
     return JSONResponse({"status": "sent", "token": jwt_token})
+
+@router.get(
+    "/test-token",
+    summary="Генерирует случайный JWT-токен и сохраняет/находит пользователя в БД"
+)
+async def get_test_token():
+    """
+    Автоматически генерирует:
+    - chat_id (int)
+    - username (str)
+    - full_name (str)
+    - referred_by (int или None)
+    Сохраняет пользователя в users_collection (если ещё не был).
+    Возвращает JWT с полями user_id, chat_id, username, full_name, iat.
+    """
+    chat_id = random.randint(100_000, 999_999)
+    username = f"user_{uuid.uuid4().hex[:8]}"
+    full_name = f"User {username}"
+    referred_by = random.choice([None, random.randint(100_000, 999_999)])
+
+    chat_id_str = str(chat_id)
+
+    user = await users_collection.find_one({"chat_id": chat_id_str})
+    if not user:
+        user_data = {
+            "chat_id": chat_id_str,
+            "username": username,
+            "full_name": full_name,
+            "referred_by": referred_by,
+            "created_at": datetime.utcnow()
+        }
+        insert_result = await users_collection.insert_one(user_data)
+        user_id = insert_result.inserted_id
+    else:
+        user_id = user["_id"]
+
+    payload = {
+        "user_id": str(user_id),   # берём реальный _id из Mongo
+        "chat_id": chat_id,
+        "username": username,
+        "full_name": full_name,
+        "iat": datetime.utcnow(),
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return {"access_token": token}
