@@ -11,7 +11,7 @@ router = APIRouter()
 
 active_connections = {}
 
-@router.get("/ws/login", include_in_schema=True, tags=["WebSocket"])
+@router.get("/login", include_in_schema=True, tags=["WebSocket"])
 def websocket_info():
     """
     **WebSocket Endpoint**  
