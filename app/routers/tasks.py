@@ -65,7 +65,7 @@ async def get_reports(
             raise HTTPException(status_code=401, detail="User ID not found in token")
         query_user_id = ObjectId(user_id)
 
-    query = {"user_id": query_user_id}
+        query = {"user_id": query_user_id, "is_deleted": {"$ne": True}}
     if date:
         query["date"] = date.isoformat()
 
@@ -97,7 +97,8 @@ async def get_report(
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
 
-    report = await collection.find_one({"_id": oid, "user_id": ObjectId(user_id)})
+    report = await collection.find_one({"_id": oid, "user_id": ObjectId(user_id), "is_deleted": {"$ne": True}})
+    
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
@@ -180,7 +181,10 @@ async def delete_report(
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
 
-    result = await collection.delete_one({"_id": oid, "user_id": ObjectId(user_id)})
+    result = await collection.update_one(
+        {"_id": oid, "user_id": ObjectId(user_id)},
+        {"$set": {"is_deleted": True, "deleted_at": datetime.utcnow().isoformat()}}
+    )
 
-    if result.deleted_count == 0:
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Report not found or no access")
