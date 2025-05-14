@@ -1,10 +1,11 @@
+import os
 import jwt
 import json
 import random
 import uuid
 
 from datetime import datetime
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 
 from app.database import users_collection
@@ -77,8 +78,11 @@ async def get_test_token():
     Сохраняет пользователя в users_collection (если ещё не был).
     Возвращает JWT с полями user_id, chat_id, username, full_name, iat.
     """
+    if not os.getenv("DEBUG", "False").lower() in ("true", "1"):
+        raise HTTPException(status_code=403, detail="Not allowed in production")
+        
     chat_id = random.randint(100_000, 999_999)
-    username = f"user_{uuid.uuid4().hex[:8]}"
+    username = f"testuser_{uuid.uuid4().hex[:8]}"
     full_name = f"User {username}"
     referred_by = random.choice([None, random.randint(100_000, 999_999)])
 
@@ -107,3 +111,22 @@ async def get_test_token():
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return {"access_token": token}
+
+@router.delete(
+    "/delete-test-users",
+    summary="Удаляет всех тестовых пользователей (username начинается с testuser_)"
+)
+async def delete_test_users():
+    if not os.getenv("DEBUG", "False").lower() in ("true", "1"):
+        raise HTTPException(status_code=403, detail="Not allowed in production")
+    
+    result = await users_collection.delete_many({
+        "username": {"$regex": "^testuser_"}
+    })
+    return JSONResponse(
+        content={
+            "status": "success",
+            "deleted_count": result.deleted_count
+        },
+        status_code=200
+    )
