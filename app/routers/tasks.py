@@ -159,3 +159,28 @@ async def update_report(
     if isinstance(report.get("created_at"), datetime):
         report["created_at"] = report["created_at"]
     return report
+
+@router.delete(
+    "/reports/{report_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удаление отчёта",
+    tags=["Reports"],
+    description="Удаляет отчёт по ID. Доступно только владельцу."
+)
+async def delete_report(
+    report_id: str = Path(..., description="ID отчёта"),
+    user_payload: dict = Depends(get_user_from_jwt),
+):
+    try:
+        oid = ObjectId(report_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid report_id format")
+
+    user_id = user_payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+
+    result = await collection.delete_one({"_id": oid, "user_id": ObjectId(user_id)})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Report not found or no access")
