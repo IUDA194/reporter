@@ -1,15 +1,11 @@
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, Request, Header, HTTPException, Depends, status, Path
+from fastapi import APIRouter, Query, HTTPException, Depends, status, Path
 from typing import Optional, List
 from datetime import date, datetime
 from bson import ObjectId
-import os
-import json
-import uuid
-import jwt
 
-from app.schemas import TaskInput, TaskSuccessResponse, ReportOut, ReportUpdate
-from app.database import collection, redis, users_collection
-from app.auth import JWT_ALGORITHM, JWT_SECRET, BOT_URL, get_user_from_jwt
+from app.schemas import TaskSuccessResponse, ReportOut, ReportUpdate
+from app.database import collection
+from app.auth import get_user_from_jwt
 from app.utils.enrich_task import enrich_task
 
 

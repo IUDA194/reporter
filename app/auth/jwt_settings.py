@@ -1,5 +1,4 @@
 import os
-import jwt
 
 JWT_SECRET = os.getenv("JWT_SECRET", "your_jwt_secret")
 JWT_ALGORITHM = "HS256"

@@ -6,8 +6,6 @@ import pytest
 import pytest_asyncio
 import jwt
 from httpx import AsyncClient, ASGITransport
-from fastapi import WebSocket
-from starlette.websockets import WebSocketDisconnect
 
 from app.main import app
 import app.database as db_module
