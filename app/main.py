@@ -13,7 +13,7 @@ load_dotenv(find_dotenv())
 app = FastAPI()
 
 cors_origins = os.getenv("CORS_ORIGINS", "")
-origins = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+origins = ['https://reporter.dot-it.ink'] # [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 
 print(origins)
 
@@ -21,9 +21,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"]
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"]
 )
 
 
