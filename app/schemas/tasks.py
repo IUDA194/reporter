@@ -8,7 +8,7 @@ class TaskInput(BaseModel):
     description: str
 
 class TaskSuccessResponse(BaseModel):
-    date: date
+    date: datetime
     developer: str
     yesterday: List[TaskInput]
     today: List[TaskInput]
