@@ -14,7 +14,7 @@ from app.auth import JWT_ALGORITHM, JWT_SECRET
 
 router = APIRouter()
 
-@router.post("/confirm-code")
+@router.post("/confirm-code", include_in_schema=False)
 async def confirm_code(request: Request):
     try:
         data = await request.json()
@@ -66,7 +66,8 @@ async def confirm_code(request: Request):
 
 @router.get(
     "/test-token",
-    summary="Генерирует случайный JWT-токен и сохраняет/находит пользователя в БД"
+    summary="Генерирует случайный JWT-токен и сохраняет/находит пользователя в БД",
+    include_in_schema=False
 )
 async def get_test_token():
     """
@@ -114,7 +115,8 @@ async def get_test_token():
 
 @router.delete(
     "/delete-test-users",
-    summary="Удаляет всех тестовых пользователей (username начинается с testuser_)"
+    summary="Удаляет всех тестовых пользователей (username начинается с testuser_)",
+    include_in_schema=False
 )
 async def delete_test_users():
     if not os.getenv("DEBUG", "False").lower() in ("true", "1"):

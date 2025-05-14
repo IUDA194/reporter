@@ -82,6 +82,7 @@ async def get_reports(
     "/reports/{report_id}",
     response_model=ReportOut,
     summary="Получение одного отчёта по ID",
+    tags=["Reports"],
 )
 async def get_report(
     report_id: str = Path(..., description="ID отчёта"),
@@ -112,6 +113,7 @@ async def get_report(
     "/reports/{report_id}",
     response_model=ReportOut,
     summary="Частичное обновление отчёта",
+    tags=["Reports"],
 )
 async def update_report(
     report_id: str = Path(..., description="ID отчёта"),
