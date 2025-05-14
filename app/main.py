@@ -13,7 +13,9 @@ load_dotenv(find_dotenv())
 app = FastAPI()
 
 cors_origins = os.getenv("CORS_ORIGINS", "")
-origins = ['https://reporter.dot-it.ink'] # [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+origins = [
+    'https://reporter.dot-it.ink',
+    'http://localhost:5173']
 
 print(origins)
 
