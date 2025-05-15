@@ -17,8 +17,6 @@ origins = [
     'https://reporter.dot-it.ink',
     'http://localhost:5173']
 
-print(origins)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

@@ -38,44 +38,42 @@ async def submit(data: TaskSuccessResponse, user_payload: dict = Depends(get_use
 
 @router.get(
     "/reports",
-    response_model=List[dict],  # можно заменить на Pydantic модель, если есть
-    summary="Получение отчетов пользователя",
+    response_model=None,
+    summary="Получение отчетов",
     tags=["Reports"],
     description="""
-    Возвращает список отчетов по дате и/или владельцу.  
-    По умолчанию — текущий авторизованный пользователь.
+    Возвращает список всех отчётов, либо только отчёты указанного пользователя, если задан `owner_id`.
 
     - **date** (опционально): дата отчета `YYYY-MM-DD`
-    - **owner_id** (опционально): ID другого пользователя (если есть доступ)
+    - **owner_id** (опционально): ID пользователя (для фильтрации)
     """
 )
 async def get_reports(
     date: Optional[date] = Query(None, description="Дата отчёта в формате YYYY-MM-DD"),
-    owner_id: Optional[str] = Query(None, description="ID пользователя, если нужно посмотреть чужие отчёты"),
+    owner_id: Optional[str] = Query(None, description="ID пользователя для фильтрации отчётов"),
     user_payload: dict = Depends(get_user_from_jwt)
 ):
+    query = {"is_deleted": {"$ne": True}}
+
     if owner_id:
         try:
-            query_user_id = ObjectId(owner_id)
+            query["user_id"] = ObjectId(owner_id)
         except Exception:
             raise HTTPException(status_code=400, detail="Invalid owner_id format")
-    else:
-        user_id = user_payload.get("user_id")
-        if not user_id:
-            raise HTTPException(status_code=401, detail="User ID not found in token")
-        query_user_id = ObjectId(user_id)
 
-        query = {"user_id": query_user_id, "is_deleted": {"$ne": True}}
     if date:
         query["date"] = date.isoformat()
 
     cursor = collection.find(query)
     reports = await cursor.to_list(length=None)
+
     for report in reports:
         report["_id"] = str(report["_id"])
-        report["user_id"] = str(report["user_id"])
-        if "created_at" in report and isinstance(report["created_at"], datetime):
+        if "user_id" in report:
+            report["user_id"] = str(report["user_id"])
+        if "created_at" in report and hasattr(report["created_at"], "isoformat"):
             report["created_at"] = report["created_at"].isoformat()
+
     return reports
 
 @router.get(
