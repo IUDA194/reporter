@@ -45,9 +45,9 @@ async def get_my_profile(user_payload: dict = Depends(get_user_from_jwt)):
         {"user_id": oid, "is_deleted": {"$ne": True}, "developer": {"$exists": True, "$ne": ""}},
         sort=[("created_at", -1)]
     )
-    developer_name = latest_report.get("developer") if latest_report else None
+    developer_name = latest_report.get("developer") if latest_report.get("developer") else None
 
-    return UserShort(
+    return UserProfile(
         user_id=str(oid),
         full_name=full_name,
         developer_name=developer_name
