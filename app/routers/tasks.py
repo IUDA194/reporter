@@ -49,7 +49,7 @@ async def submit(data: TaskSuccessResponse, user_payload: dict = Depends(get_use
     """
 )
 async def get_reports(
-    date: Optional[date] = Query(None, description="Дата отчёта в формате YYYY-MM-DD"),
+    date: Optional[datetime] = Query(None, description="Дата отчёта в формате YYYY-MM-DD"),
     owner_id: Optional[str] = Query(None, description="ID пользователя для фильтрации отчётов"),
     user_payload: dict = Depends(get_user_from_jwt)
 ):
