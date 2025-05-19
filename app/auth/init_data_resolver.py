@@ -4,7 +4,9 @@ import hmac
 import json
 from urllib.parse import unquote
 
-from fastapi import HTTPException
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 

@@ -126,9 +126,10 @@ async def auth_by_tma(request: Request):
         "chat_id": chat_id,
         "username": username,
         "full_name": full_name,
-        "iat": datetime.utcnow().isoformat(),
-        "exp": (datetime.utcnow() + timedelta(days=2)).isoformat(),
+        "iat": int(datetime.utcnow().timestamp()),  # Должен быть int!
+        "exp": int((datetime.utcnow() + timedelta(days=2)).timestamp()), 
     }
+    
     jwt_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
     return JSONResponse({"access_token": jwt_token, "user": payload})
