@@ -14,12 +14,15 @@ app = FastAPI()
 
 cors_origins = os.getenv("CORS_ORIGINS", "")
 origins = [
-    '*']
+    'https://reporter.dot-it.ink',
+    'http://localhost:5173', 
+    'https://e268-2003-ee-f713-bc73-7476-f630-ec20-c77f.ngrok-free.app'    
+]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"]
 )
