@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, HTTPException, Depends, status, Path
-from typing import Optional, List
+from typing import Optional, List, Literal
 from datetime import date, datetime
 from bson import ObjectId
 
@@ -46,11 +46,13 @@ async def submit(data: TaskSuccessResponse, user_payload: dict = Depends(get_use
 
     - **date** (опционально): дата отчета `YYYY-MM-DD`
     - **owner_id** (опционально): ID пользователя (для фильтрации)
+    - **sort_order** (опционально): порядок сортировки по дате создания ("desc" — сначала новые [по умолчанию], "asc" — сначала старые)
     """
 )
 async def get_reports(
     date: Optional[datetime] = Query(None, description="Дата отчёта в формате YYYY-MM-DD"),
     owner_id: Optional[str] = Query(None, description="ID пользователя для фильтрации отчётов"),
+    sort_order: Literal["asc", "desc"] = Query("desc", description="Порядок сортировки по дате: 'asc' или 'desc'"),
     user_payload: dict = Depends(get_user_from_jwt)
 ):
     query = {"is_deleted": {"$ne": True}}
@@ -64,7 +66,8 @@ async def get_reports(
     if date:
         query["date"] = date.isoformat()
 
-    cursor = collection.find(query)
+    sort_direction = -1 if sort_order == "desc" else 1
+    cursor = collection.find(query).sort("created_at", sort_direction)
     reports = await cursor.to_list(length=None)
 
     for report in reports:
